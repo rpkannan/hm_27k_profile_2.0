@@ -7,12 +7,12 @@ import matplotlib
 
 output_path = os.getcwd().replace("Scripts","Output/")
 
-f_brca = open(output_path+"brca/normal_rnd_betas_1.txt","r").readlines()
-f_coad = open(output_path+"coad/normal_rnd_betas_1.txt","r").readlines()
+f_brca = open(output_path+"brca/normal_dis_betas_test.txt","r").readlines()
+f_coad = open(output_path+"coad/normal_dis_betas_test.txt","r").readlines()
 
 barcodes = []
 row_num = len(f_brca)+len(f_coad)-2
-betas = np.zeros([row_num,27578])
+betas = np.zeros([row_num,24981])
 i = 0
 for line in f_brca:
 	line = line.strip().split('\t')
@@ -39,7 +39,7 @@ for i in range(0,len(f_coad)):
 	labels_d.append("C"+str(i))
 
 
-betas_dist = pdist(betas,"euclidean")
+betas_dist = pdist(betas,"hamming")
 print betas_dist
 betas_linkage = linkage(betas_dist,method="average")
 dendrogram(betas_linkage,labels=labels_d)

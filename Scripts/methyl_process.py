@@ -3,6 +3,9 @@ import numpy as np
 
 output_path = "None"
 snp_probes = open(os.getcwd().replace("Scripts","Annotation/jhu_HM27_adf/snp_probes.txt"),"r").readline().strip().split('\t')
+probes_27 = open(os.getcwd().replace("Scripts","Annotation/jhu_HM27_adf/probes_27.txt"),"r").readline().strip().split('\t')
+snp_mask = np.in1d(probes_27,snp_probes) #True: probe is snp False: probe is not snp
+
 
 def set_path(path):
 	global output_path
@@ -22,158 +25,100 @@ def check_brc(brc):
 	else:
 		return "other"
 
-'''
-Given a float raw beta value, returns a discretized float value.
-'''
-def discretize_list(beta_ls):
+def remove_snp(beta_ls):
+	global snp_mask
 	new_ls = []
-	for beta in beta_ls:
-		if (beta == "nan"):
-			new_ls.append(np.nan)
-		elif (float(beta) <= 0.2):
-			new_ls.append(0.0)
-		elif (float(beta) > 0.6):
-			new_ls.append(2.0)
-		else:
-			new_ls.append(1.0)
-	return np.array(new_ls)
-
-def replace_NA(beta_ls,discrete):
-	new_ls = []
-	if discrete:
-		for beta in beta_ls:
-			beta = float(beta)
-			if np.isnan(beta):
-				new_ls.append(1.0)
-			else:
-				new_ls.append(beta)
-	else:
-		for beta in beta_ls:
-			beta = float(beta)
-			if np.isnan(beta):
-				new_ls.append(0.5)
-			else:
-				new_ls.append(beta)
+	for i,j in zip(beta_ls,snp_mask):
+		if not j: new_ls.append(i)
 	return new_ls
 	
-
-def iround(num):
-	if num == "nan":
-		return np.nan
+def modify_ls(beta_ls,beta_option,replace_na):
+	new_ls = []
+	if beta_option == "discrete":
+		for beta in beta_ls:
+			if beta == "nan":
+				if replace_na: new_ls.append(1.0)
+				else: new_ls.append(np.nan)
+			elif float(beta) <= 0.2:
+				new_ls.append(0.0)
+			elif float(beta) > 0.6:
+				new_ls.append(2.0)
+			else:
+				new_ls.append(1.0)
+	elif beta_option == "round":
+		for beta in beta_ls:
+			if beta == "nan":
+				if replace_na: new_ls.append(0.5)
+				else: new_ls.append(np.nan)
+			else:
+				new_ls.append(round(float(beta),2))
+	elif beta_option == "original":
+		for beta in beta_ls:
+			if beta == "nan":
+				if replace_na: new_ls.append(0.5)
+				else: new_ls.append(np.nan)
+			else:
+				new_ls.append(float(beta))
 	else:
-		return round(float(num),2)
+		print "Error: please enter valid beta_option: discrete, round, original"
+		return
+	return new_ls
+			
 
-def modify_ls(beta_ls,discretize,round,replace_na):
-	if discretize and replace_na:
-		new_ls = 
-
-'''		
-Input:
-filename: "all_raw_betas.txt"
-option: "tumor", "normal", "all"
-discretize: True/False
-round: True/False
-replace_na: 0- True/False
-file_out: if "NA", output not written to file
-Output:
-probe_dict: keys: barcodes values: discretized numpy list
 '''
-def load_discrete_betas(file_in,option,discretize,round,replace_na,file_out):
-	global output_path
+Input
+file_in: 
+tissue_option: "tumor","normal","all"
+beta_option: "discrete","round","original"
+replace_na: True/False
+rm_snp: True/False
+file_out:
+'''
+def load_betas(file_in,tissue_option,beta_option,replace_na,rm_snp,file_out):
+	# check inputs
+	if tissue_option not in ["tumor","normal","all"]:
+		print "Error: please enter valid tissue_option: tumor, normal, all"
+		return
+	if beta_option not in ["discrete","round","original"]:
+		print "Error: please enter valid beta_option: discrete, round, original"
+		return
+	if not isinstance(replace_na,bool):
+		print "Error: please enter valid replace_na: True, False"
+		return
+	if not isinstance(rm_snp,bool):
+		print "Error: please enter valid rm_snp: True, False"
+		return
+	
+	# build probe_dict
+	global output_path,snp_mask
 	probe_dict = {}
 	f_in = open(output_path+file_in,"r").readlines()
-	if option == "tumor":
-		for line in f_in:
+	if rm_snp:
+		for line in f_in[1:]:
 			line = line.strip().split('\t')
-			if line[0] == "Samples":
-				continue
-			else:
-				if check_brc(line[0]) == "tumor":
-					if discretize:
-						if replace_na:
-							probe_dict[line[0]] = replace_NA(discretize_list(line[1:]),True)
-						else:
-							probe_dict[line[0]] = discretize_list(line[1:])
-					else:
-						if round:
-							if replace_na:
-								temp = np.array(line[1:])
-								probe_dict[line[0]] = replace_NA([iround(i) for i in temp],False)
-							else:
-								temp = np.array(line[1:])
-								probe_dict[line[0]] = [iround(i) for i in temp]
-						else:
-							if replace_na:
-								probe_dict[line[0]] = replace_NA(np.array(line[1:]),False)
-							else:
-								probe_dict[line[0]] = np.array(line[1:])
-	elif option == "normal":
-		for line in f_in:
-			line = line.strip().split('\t')
-			if line[0] == "Samples":
-				continue
-			else:
-				if check_brc(line[0]) == "normal":
-					if discretize:
-						if replace_na:
-							probe_dict[line[0]] = replace_NA(discretize_list(line[1:]),True)
-						else:
-							probe_dict[line[0]] = discretize_list(line[1:])
-					else:
-						if round:
-							if replace_na:
-								temp = np.array(line[1:])
-								probe_dict[line[0]] = replace_NA([iround(i) for i in temp],False)
-							else:
-								temp = np.array(line[1:])
-								probe_dict[line[0]] = [iround(i) for i in temp]
-						else:
-							if replace_na:
-								probe_dict[line[0]] = replace_NA(np.array(line[1:]),False)
-							else:
-								probe_dict[line[0]] = np.array(line[1:])				
-	elif option == "all":
-		for line in f_in:
-			line = line.strip().split('\t')
-			if line[0] == "Samples":
-				continue
-			else:
-				if discretize:
-					if replace_na:
-						probe_dict[line[0]] = replace_NA(discretize_list(line[1:]),True)
-					else:
-						probe_dict[line[0]] = discretize_list(line[1:])
-				else:
-					if round:
-						if replace_na:
-							temp = np.array(line[1:])
-							probe_dict[line[0]] = replace_NA([iround(i) for i in temp],False)
-						else:
-							temp = np.array(line[1:])
-							probe_dict[line[0]] = [iround(i) for i in temp]
-					else:
-						if replace_na:
-							probe_dict[line[0]] = replace_NA(np.array(line[1:]),False)
-						else:
-							probe_dict[line[0]] = np.array(line[1:])
+			if check_brc(line[0]) == tissue_option: probe_dict[line[0]] = modify_ls(remove_snp(line[1:]),beta_option,replace_na)
 	else:
-		print "Error: please enter valid option"
-		return probe_dict
+		for line in f_in[1:]:
+			line = line.strip().split('\t')
+			if check_brc(line[0]) == tissue_option: probe_dict[line[0]] = modify_ls(line[1:],beta_option,replace_na)
+	
+	# write to file
 	if file_out == "NA":
 		return probe_dict
 	else:
 		f_out = open(output_path+file_out,"w")
-		f_out.write(f_in[0])
+		if rm_snp:
+			header = []
+			first_ln = f_in[0].strip().split('\t')
+			for i,j in zip(first_ln[1:],snp_mask):
+				if not j: header.append(i)
+			f_out.write("Samples"+'\t'+'\t'.join(header))
+		else:
+			f_out.write(f_in[0])
 		for pr in sorted(probe_dict.keys()):
 			f_out.write(pr+'\t'+'\t'.join(str(a) for a in probe_dict[pr])+'\n')
 		f_out.close()
 		return probe_dict
-
-def remove_snp(beta_ls):
-	global snp_probes
-	
-	
-
 
 ###################################### MAIN METHOD #######################################	
 main_path = os.getcwd().replace("Scripts","Output/")
@@ -181,12 +126,14 @@ cancers = ["brca","coad","gbm","kirc","luad","lusc","ov","ucec"]
 cancers = ["brca","coad"]
 for cancer in cancers:
 	set_path(main_path+cancer+"/")
-	#load_discrete_betas("all_raw_betas.txt","normal",True,True,False,"normal_dis_betas.txt")
-	#load_discrete_betas("all_raw_betas.txt","normal",False,False,False,"normal_raw_betas.txt")
-	#load_discrete_betas("all_raw_betas.txt","normal",False,True,False,"normal_rnd_betas.txt")
-	load_discrete_betas("all_raw_betas.txt","normal",True,True,True,"normal_dis_betas_1.txt")
-	load_discrete_betas("all_raw_betas.txt","normal",False,False,True,"normal_raw_betas_1.txt")
-	load_discrete_betas("all_raw_betas.txt","normal",False,True,True,"normal_rnd_betas_1.txt")
+	load_betas("all_raw_betas.txt","normal","round",True,True,"normal_rnd_betas.txt")
+	load_betas("all_raw_betas.txt","normal","discrete",True,True,"normal_dis_betas_tes.txt")
+	load_betas("all_raw_betas.txt","tumor","round",True,True,"tumor_rnd_betas.txt")
+	load_betas("all_raw_betas.txt","tumor","discrete",True,True,"tumor_dis_betas_tes.txt")
+	load_betas("all_raw_betas.txt","all","round",True,True,"all_rnd_betas.txt")
+	load_betas("all_raw_betas.txt","all","discrete",True,True,"all_dis_betas_tes.txt")
+
+
 	print cancer
 print "C'est fini!"
 

@@ -1,7 +1,7 @@
 import sys, os, time
 import numpy as np
 #from numpy.linalg import norm 
-import pandas as pd 
+#import pandas as pd 
 
 '''
 f_1 = open(os.getcwd().replace("Scripts","Output/brca/")+"normal_raw_betas.txt","r").readlines()
@@ -22,7 +22,7 @@ print len(f_6[0].strip().split('\t'))
 '''
 
 
-
+'''
 f_3 = open(os.getcwd().replace("Scripts","Output/brca/")+"normal_rnd_betas.txt","r").readlines()
 
 probe_dict = {}
@@ -47,6 +47,7 @@ print total
 f_out = open(os.getcwd().replace("Scripts","Annotation/jhu_HM27_adf/snp_probes.txt"),"w")
 f_out.write('\t'.join(snp_probes))
 f_out.close()
+'''
 
 '''
 total1 = 0
@@ -121,3 +122,5 @@ for key in probe_dict_4.keys():
 			total += 1
 print total
 '''
+g = True
+print isinstance(g,bool)
