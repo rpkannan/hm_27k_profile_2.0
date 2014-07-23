@@ -127,13 +127,11 @@ cancers = ["brca","coad"]
 for cancer in cancers:
 	set_path(main_path+cancer+"/")
 	load_betas("all_raw_betas.txt","normal","round",True,True,"normal_rnd_betas.txt")
-	load_betas("all_raw_betas.txt","normal","discrete",True,True,"normal_dis_betas_tes.txt")
+	load_betas("all_raw_betas.txt","normal","discrete",True,True,"normal_dis_betas.txt")
 	load_betas("all_raw_betas.txt","tumor","round",True,True,"tumor_rnd_betas.txt")
-	load_betas("all_raw_betas.txt","tumor","discrete",True,True,"tumor_dis_betas_tes.txt")
+	load_betas("all_raw_betas.txt","tumor","discrete",True,True,"tumor_dis_betas.txt")
 	load_betas("all_raw_betas.txt","all","round",True,True,"all_rnd_betas.txt")
-	load_betas("all_raw_betas.txt","all","discrete",True,True,"all_dis_betas_tes.txt")
-
-
+	load_betas("all_raw_betas.txt","all","discrete",True,True,"all_dis_betas.txt")
 	print cancer
 print "C'est fini!"
 
